@@ -23,6 +23,14 @@ local statistics_common = {}
 ---@field amountClass? string
 ---@field extra? react.TreeNodeId
 
+-- The component types the tabs check with statistics_common.has (getComponent is typed per type).
+---@alias uo.statistics_common.CheckedType
+---| Engine.ComponentType.ACCOUNT
+---| Engine.ComponentType.LINE
+---| Engine.ComponentType.STATION_GROUP
+---| Engine.ComponentType.TRANSPORT_VEHICLE
+---| Engine.ComponentType.WAREHOUSE
+
 ---@return integer
 local function game_time()
 	return api.engine.getComponent(api.engine.util.getWorld(), api.type.ComponentType.GAME_TIME).gameTime
@@ -34,7 +42,7 @@ end
 -- ("it != components.end()") that pcall cannot catch: check with this before such a call.
 -- getComponent itself returns nil for a missing component (docs/api_cookbook.md, 0).
 ---@param entity Engine.Entity
----@param componentType Engine.ComponentType
+---@param componentType uo.statistics_common.CheckedType
 ---@return boolean
 function statistics_common.has(entity, componentType)
 	return api.engine.entityExists(entity) and api.engine.getComponent(entity, componentType) ~= nil

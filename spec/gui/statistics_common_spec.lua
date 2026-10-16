@@ -15,7 +15,7 @@ local WORLD = 1
 describe("statistics_common", function()
 	local globals = _G ---@type table<string, any> global name -> value, of any type
 	local saved ---@type any the global api before the spec
-	local components ---@type table<integer, table<string, table>> entity -> component type -> component
+	local components ---@type table<integer, table<string, table<string, any>>> entity -> component type -> component
 	local balanced ---@type integer[] the entities calculateBalance was asked for
 	before_each(function()
 		saved = globals.api
@@ -79,7 +79,7 @@ describe("statistics_common", function()
 
 	it("keeps the cached balance safe when a vehicle loses its account between reads", function()
 		local common = load()
-		local cached = common.makeBalanceCache()
+		local cached = common.makeBalanceCache() ---@type fun(entity: integer): integer
 		assert.are.equal(-250, cached(10))
 		components[10][ACCOUNT] = nil
 		components[WORLD][GAME_TIME].gameTime = 9000 -- past the cache's second: read again
