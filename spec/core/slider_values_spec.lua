@@ -8,6 +8,16 @@ describe("slider_values", function()
 		assert.are.equal(30, slider_values.on_grid(31, 0, 600, 10))
 	end)
 
+	it("keeps the last position where it lies off the grid", function()
+		-- a slider like the Line Manager's wait times: ticks every 10 s, and 601 past the last one for "---"
+		assert.are.equal(601, slider_values.on_grid(601, 0, 601, 10))
+		assert.are.equal(601, slider_values.on_grid(700, 0, 601, 10))
+		assert.are.equal(600, slider_values.on_grid(600, 0, 601, 10))
+		assert.are.equal(600, slider_values.on_grid(596, 0, 601, 10))
+		assert.are.equal(590, slider_values.on_grid(592, 0, 601, 10))
+		assert.are.equal(601, slider_values.on_grid(slider_values.wheel(600, 0, 601, 10, 1), 0, 601, 10))
+	end)
+
 	it("moves one step per wheel notch, within the range", function()
 		assert.are.equal(24, slider_values.wheel(23, 0, 100, 1, 1))
 		assert.are.equal(22, slider_values.wheel(23, 0, 100, 1, -1))

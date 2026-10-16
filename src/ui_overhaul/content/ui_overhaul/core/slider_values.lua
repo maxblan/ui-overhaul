@@ -2,7 +2,8 @@
 -- @module ui_overhaul.core.slider_values
 local slider_values = {}
 
---- `value` moved onto the slider's grid (min + k x step) and into min..max.
+--- `value` moved onto the slider's grid (min + k x step) and into min..max. max is a position of
+-- its own where it lies off the grid: the nearest of the grid and max wins.
 ---@param value number
 ---@param min number
 ---@param max number
@@ -12,7 +13,8 @@ function slider_values.on_grid(value, min, max, step)
 	step = (step and step > 0) and step or 1
 	local v = min + math.floor((value - min) / step + 0.5) * step
 	if v < min then v = min end
-	if v > max then v = max end
+	-- e.g. 0..601 in steps of 10: 601, past the last tick, is the wait times' "---" (no limit)
+	if v > max or value - v > max - value then v = max end
 	return v
 end
 
