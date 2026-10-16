@@ -13,6 +13,8 @@ local STATION_BUTTONS = "Window!uio-on-station-terminals" -- styles.on("station_
 
 ---@return table
 function data()
+	-- how far the game got, for a crash while it loads (issue #7); this Lua state may lack debugPrint
+	pcall(function() debugPrint("[ui_overhaul] stylesheet terminals") end)
 	local result = {}
 	local add = ssu.makeAdder(result)
 	local colorDefault = api.gui.genericRep.get(api.gui.genericRep.find("::/gui/main/default_colors.gres")).data

@@ -26,9 +26,10 @@ end
 local colours = setmetatable({}, { __index = function() return { 1, 1, 1, 1 } end })
 
 --- The selectors of every rule of every stylesheet, each part of a selector list on its own, with the
--- game's stylesheet helpers and colour tables stood in.
+-- game's stylesheet helpers and colour tables stood in, and `log` as debugPrint meanwhile (nil: none).
+---@param log? fun(...: any)
 ---@return { file: string, selector: string }[]
-local function selectors()
+local function run_stylesheets(log)
 	local loaded = package.loaded ---@type table<string, any>
 	local saved = { loaded["::/gui/main/stylesheetutil.lua"], loaded["::/gui/main/color_util.tl"] }
 	loaded["::/gui/main/stylesheetutil.lua"] = {
@@ -42,7 +43,8 @@ local function selectors()
 		__index = function() return function(colour) return colour end end,
 	})
 	local globals = _G ---@type table<string, any>
-	local saved_api = globals.api
+	local saved_api, saved_print = globals.api, globals.debugPrint
+	globals.debugPrint = log
 	globals.api = { gui = { genericRep = { find = function(path) return path end,
 		get = function() return { data = colours } end } } }
 	local list = {} ---@type { file: string, selector: string }[]
@@ -54,9 +56,15 @@ local function selectors()
 			for part in rule.selector:gmatch("[^,]+") do list[#list + 1] = { file = file, selector = part } end
 		end
 	end
-	globals.api = saved_api
+	globals.api, globals.debugPrint = saved_api, saved_print
 	loaded["::/gui/main/stylesheetutil.lua"], loaded["::/gui/main/color_util.tl"] = saved[1], saved[2]
 	return list
+end
+
+--- run_stylesheets with a debugPrint that logs nothing.
+---@return { file: string, selector: string }[]
+local function selectors()
+	return run_stylesheets(function() end)
 end
 
 describe("stylesheets", function()
@@ -87,6 +95,20 @@ describe("stylesheets", function()
 			end
 		end
 		assert.are.same({}, bad)
+	end)
+
+	it("log their names (how far a crashing load got), also in a Lua state without debugPrint", function()
+		local logged, files = {}, {} ---@type string[], table<string, true>
+		local rules = run_stylesheets(function(...) logged[#logged + 1] = table.concat({ ... }) end)
+		for _i, rule in ipairs(rules) do files[rule.file] = true end
+		local expected = {} ---@type string[]
+		for file in pairs(files) do
+			expected[#expected + 1] = "[ui_overhaul] stylesheet " .. (file:match("([%w_]+)%.css%.lua$") or file)
+		end
+		table.sort(expected)
+		table.sort(logged)
+		assert.are.same(expected, logged)
+		assert.are.equal(#rules, #run_stylesheets(nil))
 	end)
 
 	it("use only the window classes styles.lua sets", function()

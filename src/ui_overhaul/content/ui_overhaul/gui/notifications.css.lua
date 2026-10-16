@@ -46,6 +46,8 @@ end
 
 ---@return table[]
 function data()
+	-- how far the game got, for a crash while it loads (issue #7); this Lua state may lack debugPrint
+	pcall(function() debugPrint("[ui_overhaul] stylesheet notifications") end)
 	local result = {}
 	local add = ssu.makeAdder(result)
 	add("R::NotificationPopups R::NotificationIcon TextView!bubble!uio-notification-count", {
