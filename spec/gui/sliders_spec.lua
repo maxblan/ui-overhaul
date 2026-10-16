@@ -136,6 +136,17 @@ describe("sliders hooks", function()
 		assert.are.same({ slider = p }, node.layout.children[1])
 	end)
 
+	it("lets the slider reach its last position where it lies off the grid", function()
+		-- a slider like the Line Manager's wait times: ticks every 10 s, and 601 past the last one for "---"
+		local slider = fake.mount(fake.recipe("UioSlider"))
+		---@type number?
+		local sent
+		slider.render({ p = { min = 0, max = 601, step = 10, value = 600, onValueChange = function(v) sent = v end } })
+		assert.are.equal("function", type(base.onValueChange))
+		base.onValueChange(601)
+		assert.are.equal(601, sent)
+	end)
+
 	it("falls back to a plain slider without raising on odd value lists", function()
 		local row = fake.mount(fake.recipe("ScriptParamSliderAndText"))
 		---@type string? the value list holds strings here, on purpose
