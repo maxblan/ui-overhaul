@@ -53,4 +53,24 @@ describe("statistics warehouses", function()
 		assert.are.equal(95, warehouses.count_of(full, 4))
 		assert.are.equal(0, warehouses.count_of(full, 5))
 	end)
+
+	it("reads nothing of a warehouse removed since the rows were read", function()
+		local globals = _G ---@type table<string, any> global name -> value, of any type
+		local saved = globals.api ---@type any the global api before the spec
+		-- the stock reads are not stood in: reaching them raises, as the game would crash natively
+		local mock = {
+			type = { ComponentType = { WAREHOUSE = "warehouse" } },
+			engine = {
+				---@return boolean
+				entityExists = function() return true end,
+				---@return nil
+				getComponent = function() return nil end,
+			},
+		}
+		_G.api = mock --[[@as api]]
+		local ok, data = pcall(warehouses.read, 42)
+		globals.api = saved
+		assert.is_true(ok, tostring(data))
+		assert.are.same({ stored = 0, capacity = 0, cargos = {}, takes = {}, all = false }, data)
+	end)
 end)

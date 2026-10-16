@@ -370,7 +370,7 @@ local function render(params)
 		local totals = { lines = 0, vehicles = 0, balance = 0 }
 		local map = tableState:hasExpired() and {} or tableState:old().filteredKeysMap or {}
 		for line in pairs(map) do
-			if api.engine.entityExists(line) then
+			if statistics_common.has(line, api.type.ComponentType.LINE) then
 				totals.lines = totals.lines + 1
 				totals.vehicles = totals.vehicles + #api.engine.system.transportVehicleSystem.getLineVehicles(line)
 				totals.balance = totals.balance + cached_balance(line)

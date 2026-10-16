@@ -323,7 +323,7 @@ local function render(params)
 	---@param notificationsState table<Engine.Entity, integer[]>
 	---@return boolean
 	local function filterFn(key, notificationsState)
-		if not api.engine.entityExists(key) then return false end
+		if not statistics_common.has(key, api.type.ComponentType.STATION_GROUP) then return false end
 		if params.filterShowOnlyVisible and not api.gui.byEntity.isVisible(key) then return false end
 		local allowedCarriers = statistics_react_util.getCarrierFilterFromCategories(categories, params.filterShowCategories)
 		if allowedCarriers ~= nil then
@@ -397,7 +397,8 @@ local function render(params)
 		local totals = { stations = 0, upkeep = 0 }
 		local map = tableState:hasExpired() and {} or tableState:old().filteredKeysMap or {}
 		for stationGroup in pairs(map) do
-			if api.engine.entityExists(stationGroup) then
+			-- calcMaintenanceForStationGroup reads the group natively (statistics_common.has)
+			if statistics_common.has(stationGroup, api.type.ComponentType.STATION_GROUP) then
 				totals.stations = totals.stations + 1
 				totals.upkeep = totals.upkeep + api.engine.util.maintenance.calcMaintenanceForStationGroup(stationGroup)
 			end
