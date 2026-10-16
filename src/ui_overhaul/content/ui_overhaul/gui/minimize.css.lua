@@ -17,6 +17,8 @@ local FIXED = {
 
 ---@return table[]
 function data()
+	-- how far the game got, for a crash while it loads (issue #7); this Lua state may lack debugPrint
+	pcall(function() debugPrint("[ui_overhaul] stylesheet minimize") end)
 	local result = {}
 	local add = ssu.makeAdder(result)
 	add("Window!uio-minimizable Window::Title", { visibility = "none" })

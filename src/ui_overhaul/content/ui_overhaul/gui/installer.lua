@@ -74,7 +74,10 @@ local early_done, late_done = false, false
 function installer.early(replacement_api)
 	if early_done then return end
 	early_done = true
-	debugPrint("[ui_overhaul] game build ", compat.build() or "unknown", ", settings: ", settings.describe())
+	-- the settings on a line of their own: api.engine.config.getModParams reads every mod's params, so a
+	-- crash there shows as a build line without a settings line (issue #7)
+	debugPrint("[ui_overhaul] game build ", compat.build() or "unknown")
+	debugPrint("[ui_overhaul] settings: ", settings.describe())
 	priority.early(replacement_api, settings.enabled)
 	-- the window classes the stylesheets select by (styles.lua): first, so that the features' wraps
 	-- of builtin.Window lie above it, where they can be settled

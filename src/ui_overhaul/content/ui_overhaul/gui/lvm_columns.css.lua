@@ -14,6 +14,8 @@ local WIDTH = COLUMN + GAP + COLUMN
 
 ---@return table[]
 function data()
+	-- how far the game got, for a crash while it loads (issue #7); this Lua state may lack debugPrint
+	pcall(function() debugPrint("[ui_overhaul] stylesheet lvm_columns") end)
 	local result = {}
 	local add = ssu.makeAdder(result)
 	-- with mouse and keyboard only: with a gamepad the parts stay stacked (lvm_columns.lua)

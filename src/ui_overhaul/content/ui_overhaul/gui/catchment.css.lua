@@ -5,6 +5,8 @@ local ssu = require("::/gui/main/stylesheetutil.lua")
 
 ---@return table
 function data()
+	-- how far the game got, for a crash while it loads (issue #7); this Lua state may lack debugPrint
+	pcall(function() debugPrint("[ui_overhaul] stylesheet catchment") end)
 	local result = {}
 	local add = ssu.makeAdder(result)
 	add("ToggleButton!uio-catchment-toggle", {

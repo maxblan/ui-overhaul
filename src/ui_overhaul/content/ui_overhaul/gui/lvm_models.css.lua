@@ -8,6 +8,8 @@ local ssu = require("::/gui/main/stylesheetutil.lua")
 
 ---@return table[]
 function data()
+	-- how far the game got, for a crash while it loads (issue #7); this Lua state may lack debugPrint
+	pcall(function() debugPrint("[ui_overhaul] stylesheet lvm_models") end)
 	local result = {}
 	local add = ssu.makeAdder(result)
 	add("R::UioLvmModels !uio-lvm-models", { margin = { 0, 0, 2, 0 } })

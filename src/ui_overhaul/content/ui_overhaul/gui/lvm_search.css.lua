@@ -4,6 +4,8 @@ local ssu = require("::/gui/main/stylesheetutil.lua")
 
 ---@return table[]
 function data()
+	-- how far the game got, for a crash while it loads (issue #7); this Lua state may lack debugPrint
+	pcall(function() debugPrint("[ui_overhaul] stylesheet lvm_search") end)
 	local result = {}
 	local colorDefault = api.gui.genericRep.get(api.gui.genericRep.find("::/gui/main/default_colors.gres")).data
 	local add = ssu.makeAdder(result)
