@@ -456,8 +456,7 @@ function window_tweaks.settle_sell()
 			debugPrint("[ui_overhaul] Sell confirmation left out: ", tostring(owner), " replaces the action bar")
 			return "left out"
 		end
-		local registry = _react.recipeReplace --[[@as table<integer, function>]]
-		registry[id] = window_tweaks.chain_sell(replacement)
+		_react.recipeReplace[id] = window_tweaks.chain_sell(replacement)
 		debugPrint("[ui_overhaul] Sell confirmation: chained on the action bar ", tostring(owner), " replaces")
 		return "chained"
 	end
