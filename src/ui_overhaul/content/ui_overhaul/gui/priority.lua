@@ -727,7 +727,8 @@ function priority.registered(fn)
 	return nil
 end
 
---- `replace` with its recipe argument turned into the registered recipe behind it (`registered`).
+--- `replace` (or another react.lua function taking a recipe first) with its recipe argument turned
+-- into the registered recipe behind it (`registered`).
 ---@param replace fun(recipe: function, replacement?: function, ...: any): any
 ---@return fun(recipe: function, replacement?: function, ...: any): any
 local function through_registered(replace)
@@ -753,6 +754,11 @@ function priority.early(replacement_api, enabled)
 	local internal = react_fields.GloballyReplaceRecipeBeforeInitInternal
 	if type(internal) == "function" then
 		react_fields.GloballyReplaceRecipeBeforeInitInternal = through_registered(internal)
+	end
+	-- and for their replacement's call of the original, by the function they read from the field
+	local call_original = react_fields.CallOriginalRecipe
+	if type(call_original) == "function" then
+		react_fields.CallOriginalRecipe = through_registered(call_original)
 	end
 	api_fields.ReplaceRecipe = through_registered(function(recipe, replacement)
 		pcall(function()

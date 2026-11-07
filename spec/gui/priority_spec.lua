@@ -508,6 +508,23 @@ describe("priority", function()
 			assert.are.same({ window }, calls)
 		end)
 
+		it("lets their replacement call the original by the function it read from the field", function()
+			world({ "ui_overhaul_1", "other_mod" })
+			local priority = load_priority()
+			local window = recipe("Window")
+			local module = { Window = window }
+			local called ---@type function?
+			---@diagnostic disable-next-line: inject-field
+			fake_react.CallOriginalRecipe = function(original) called = original end
+			priority.early(game_api(), function() return true end)
+			priority.begin("feature", true)
+			priority.chain(module, "Window", function(previous) return function(p) return previous(p) end end)
+			priority.finish(true)
+			fake_react.CallOriginalRecipe(module.Window, {})
+			fake_react.CallOriginalRecipe = nil
+			assert.are.equal(window, called)
+		end)
+
 		it("leaves a function that is no recipe as it is", function()
 			local priority = load_priority()
 			assert.is_nil(priority.registered(function() end))

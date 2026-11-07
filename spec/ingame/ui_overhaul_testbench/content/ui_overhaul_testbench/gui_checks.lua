@@ -1182,6 +1182,25 @@ local checks = {
 		end,
 	},
 	{
+		-- with --only replace_wrapped_recipe: the testbench's config replaced the popover content it read
+		-- from the field this mod wraps (gui/replace_wrapped.script.lua); the game started, and the
+		-- terminal popover shows inside that replacement
+		name = "replace_wrapped_recipe",
+		act = function(ctx)
+			api.gui.fireReactEvent("closeAllWindows", nil)
+			ctx.terminal_line = ctx.terminal_line or busiest_line()
+			if ctx.terminal_line then api.gui.fireReactEvent("uio.debug.terminals", ctx.terminal_line) end
+		end,
+		wait = 90,
+		check = function(ctx)
+			if not ctx.terminal_line then return true, "skipped: no line" end
+			local replaced, ours = visible("probe.replaced_popover"), visible("uio.terminals.usage.1")
+			api.gui.fireReactEvent("uio.debug.terminals", nil)
+			return replaced and ours, string.format("replacement visible=%s, usage buttons visible=%s",
+				tostring(replaced), tostring(ours))
+		end,
+	},
+	{
 		name = "terminal_usage_buttons",
 		act = function(ctx)
 			api.gui.fireReactEvent("closeAllWindows", nil)
