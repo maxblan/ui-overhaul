@@ -39,9 +39,10 @@ files["src/ui_overhaul/content/ui_overhaul/gui/station_terminals.lua"] = {
 files["src/ui_overhaul/content/ui_overhaul/gui/minimize.lua"] = {
 	read_globals = { "api", "app", "debugPrint", "_", "_react" },
 }
--- Reads the React registry _react (base/init.lua): whether a mod replaced the action bar (settle_sell).
+-- Reads the React registry _react (base/init.lua): whether a mod replaced the action bar, and chains
+-- the confirmation on that replacement (settle_sell).
 files["src/ui_overhaul/content/ui_overhaul/gui/window_tweaks.lua"] = {
-	read_globals = { "api", "app", "debugPrint", "_", "_react" },
+	read_globals = { "api", "app", "debugPrint", "_", _react = { fields = { recipeReplace = { other_fields = true, read_only = false } } } },
 }
 -- Reads the React registry _react (base/init.lua): a builtin's recipe id.
 files["src/ui_overhaul/content/ui_overhaul/gui/builtin_wraps.lua"] = {

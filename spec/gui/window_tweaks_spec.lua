@@ -200,16 +200,25 @@ describe("window_tweaks Sell confirmation", function()
 		assert.are.same({}, node) -- a wrapper's empty child list (not nil: react.lua indexes it)
 	end)
 
-	it("steps aside where another mod replaced the bar below, which the wrap would hide", function()
+	it("chains on the bar another mod replaced below, which the wrap would hide", function()
 		local globals = _G ---@type table<string, any>
 		local saved_react = globals._react ---@type any the game's registry, or nil outside the game
 		local wrapper = util.ActionButtonBar ---@type function
 		globals._react = { recipeReplace = {} }
 		assert.are.equal("kept", window_tweaks.settle_sell())
 		assert.are.equal(wrapper, util.ActionButtonBar)
-		globals._react = { recipeReplace = { [7] = function() end } }
-		assert.are.equal("left out", window_tweaks.settle_sell())
+		local seen ---@type any the params their bar got
+		local their_node = { theirs = true }
+		globals._react = { recipeReplace = { [7] = function(params)
+			seen = params
+			return their_node
+		end } }
+		assert.are.equal("chained", window_tweaks.settle_sell())
 		assert.are.equal(wrappers.UioActionButtonBar, util.ActionButtonBar)
+		-- their bar, with the confirming Sell button, and exactly their node
+		local sell = { tag = "entityWindow.vehicle.sell", sound = "Sell", description = "Sell", onClick = function() end }
+		assert.are.equal(their_node, globals._react.recipeReplace[7]({ secondaryButtons = { sell } }))
+		assert.are.equal("UioConfirmSellButton", seen.secondaryButtons[1].customItem.recipe)
 		util.ActionButtonBar, globals._react = wrapper, saved_react
 	end)
 end)
