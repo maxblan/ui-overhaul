@@ -515,7 +515,9 @@ describe("priority", function()
 			local module = { Window = window }
 			local called ---@type function?
 			---@diagnostic disable-next-line: inject-field
-			fake_react.CallOriginalRecipe = function(original) called = original end
+			---@param original function
+			---@param _params any the recipe's params
+			fake_react.CallOriginalRecipe = function(original, _params) called = original end
 			priority.early(game_api(), function() return true end)
 			priority.begin("feature", true)
 			priority.chain(module, "Window", function(previous) return function(p) return previous(p) end end)
