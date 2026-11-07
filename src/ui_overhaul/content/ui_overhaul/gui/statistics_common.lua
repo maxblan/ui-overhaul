@@ -23,15 +23,38 @@ local statistics_common = {}
 ---@field amountClass? string
 ---@field extra? react.TreeNodeId
 
+-- The component types the tabs check with statistics_common.has (getComponent is typed per type).
+---@alias uo.statistics_common.CheckedType
+---| Engine.ComponentType.ACCOUNT
+---| Engine.ComponentType.LINE
+---| Engine.ComponentType.STATION_GROUP
+---| Engine.ComponentType.TRANSPORT_VEHICLE
+---| Engine.ComponentType.WAREHOUSE
+
 ---@return integer
 local function game_time()
 	return api.engine.getComponent(api.engine.util.getWorld(), api.type.ComponentType.GAME_TIME).gameTime
 end
 
---- Balance of the last 12 months, as the statistics "Balance" columns show it. Reads only the engine.
+--- True if the entity still exists and still has the component. A row's entity can lose its
+-- components between two refreshes of the table (a vehicle sold or replaced, a line or station
+-- removed), and an engine helper that reads a missing component fails a native assertion
+-- ("it != components.end()") that pcall cannot catch: check with this before such a call.
+-- getComponent itself returns nil for a missing component (docs/api_cookbook.md, 0).
+---@param entity Engine.Entity
+---@param componentType uo.statistics_common.CheckedType
+---@return boolean
+function statistics_common.has(entity, componentType)
+	return api.engine.entityExists(entity) and api.engine.getComponent(entity, componentType) ~= nil
+end
+
+--- Balance of the last 12 months, as the statistics "Balance" columns show it, 0 for an entity that
+-- has no account (any more). Reads only the engine.
 ---@param entity Engine.Entity
 ---@return integer
 function statistics_common.balance(entity)
+	-- calculateBalance reads the entity's account natively; without one the game crashes
+	if not statistics_common.has(entity, api.type.ComponentType.ACCOUNT) then return 0 end
 	local gameTime = game_time()
 	local fromTime = math.max(gameTime - api.util.getDefaultYearDuration(), 0)
 	return api.engine.util.finance.calculateBalance({ entity }, fromTime, gameTime, true)

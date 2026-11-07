@@ -86,9 +86,11 @@ local REFRESH_STEPS = 30
 ---@param entity Engine.Entity warehouse
 ---@return uo.statistics_warehouses.Data
 function statistics_warehouses.read(entity)
-	local configs = cargo_util.calculateStockConfigs(entity)
 	---@type uo.statistics_warehouses.Data
 	local result = { stored = 0, capacity = 0, cargos = {}, takes = {}, all = false }
+	-- a cell or the sort can ask for a warehouse removed since the rows were read (statistics_common.has)
+	if not statistics_common.has(entity, api.type.ComponentType.WAREHOUSE) then return result end
+	local configs = cargo_util.calculateStockConfigs(entity)
 	for _i, config in ipairs(configs or {}) do
 		result.stored = result.stored + (config.stored or 0)
 		result.capacity = result.capacity + (config.capacity or 0)

@@ -411,7 +411,8 @@ local function render(params)
 		local totals = { vehicles = 0, balance = 0 }
 		local map = tableState:hasExpired() and {} or tableState:old().filteredKeysMap or {}
 		for vehicle in pairs(map) do
-			if api.engine.entityExists(vehicle) then
+			-- the rows are refreshed every REFRESH_STEPS steps; a vehicle sold or replaced since is skipped
+			if statistics_common.has(vehicle, api.type.ComponentType.TRANSPORT_VEHICLE) then
 				totals.vehicles = totals.vehicles + 1
 				totals.balance = totals.balance + cached_balance(vehicle)
 			end

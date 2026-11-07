@@ -9,6 +9,11 @@
 
 -- Components ----------------------------------------------------------------------------------------
 
+---What a line, a vehicle or the player earned and spent (apidef/api/engine.d.tl, Account).
+---@class Engine.Component.Account
+---@field balance integer
+---@field loan integer
+
 ---@class Engine.Component.BaseEdge
 ---@field type BaseEdgeType
 ---@field typeIndex integer
@@ -145,6 +150,7 @@ function Line.new() end
 -- getComponent's overloads can pick the component class from the argument.
 
 ---@class Engine.ComponentType
+---@field ACCOUNT Engine.ComponentType.ACCOUNT
 ---@field BASE_EDGE Engine.ComponentType.BASE_EDGE
 ---@field BASE_NODE Engine.ComponentType.BASE_NODE
 ---@field CARRIAGE Engine.ComponentType.CARRIAGE
@@ -163,6 +169,7 @@ function Line.new() end
 ---@field VEHICLE_DEPOT Engine.ComponentType.VEHICLE_DEPOT
 ---@field WAREHOUSE Engine.ComponentType.WAREHOUSE
 
+---@class Engine.ComponentType.ACCOUNT: Engine.ComponentType
 ---@class Engine.ComponentType.BASE_EDGE: Engine.ComponentType
 ---@class Engine.ComponentType.BASE_NODE: Engine.ComponentType
 ---@class Engine.ComponentType.CARRIAGE: Engine.ComponentType
@@ -210,6 +217,7 @@ local Engine = {}
 ---@param entity Engine.Entity
 ---@param componentType Engine.ComponentType.BASE_EDGE
 ---@return Engine.Component.BaseEdge?
+---@overload fun(entity: Engine.Entity, t: Engine.ComponentType.ACCOUNT): Engine.Component.Account?
 ---@overload fun(entity: Engine.Entity, t: Engine.ComponentType.BASE_NODE): Engine.Component.BaseNode?
 ---@overload fun(entity: Engine.Entity, t: Engine.ComponentType.CARRIAGE): Engine.Component.Carriage?
 ---@overload fun(entity: Engine.Entity, t: Engine.ComponentType.CONSTRUCTION): Engine.Component.Construction?
