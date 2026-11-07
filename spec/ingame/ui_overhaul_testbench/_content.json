@@ -5,6 +5,8 @@
         "ui_overhaul_testbench/fixture.lua",
         "ui_overhaul_testbench/gui/probe.res.lua",
         "ui_overhaul_testbench/gui/probe.script.lua",
+        "ui_overhaul_testbench/gui/replace_wrapped.res.lua",
+        "ui_overhaul_testbench/gui/replace_wrapped.script.lua",
         "ui_overhaul_testbench/gui_checks.lua",
         "ui_overhaul_testbench/scenarios.lua",
         "ui_overhaul_testbench/site.lua",

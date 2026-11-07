@@ -118,6 +118,9 @@ local function wrap_registration()
 			if found ~= nil or type(fn) ~= "function" then return found end
 			local ok, base = pcall(builtin_wraps.base, fn)
 			if ok and base ~= fn then return lookup(base) end
+			-- a recipe field priority.chain wrapped
+			local found_ok, registered = pcall(priority.registered, fn)
+			if found_ok and registered ~= nil and registered ~= fn then return lookup(registered) end
 			return nil
 		end
 	end

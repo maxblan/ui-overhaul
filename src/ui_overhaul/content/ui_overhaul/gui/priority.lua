@@ -147,6 +147,9 @@ local watched_by_table = {} ---@type table<table, uo.gui.priority.Watched>
 -- writes kept per field, in case `late` never runs (another mod's config failing stops the configs)
 local WRITE_LIMIT = 32
 local base_replace ---@type fun(recipe: function, replacement?: function)? the game's ReplaceRecipe
+local wrapped_from = {} ---@type table<function, function> a wrap this mod put in a field -> the function it wraps
+-- react.lua's own lookup, before builtin_wraps answers it for replacements too
+local get_recipe_id = react.GetRecipeId
 local decided = false
 
 -- Debug library ----------------------------------------------------------------------------------
@@ -413,6 +416,7 @@ function priority.chain(module, field, make, generic, settled)
 	if current == nil then
 		local wrapped = make(previous)
 		fields[field] = wrapped
+		wrapped_from[wrapped] = previous
 		return wrapped
 	end
 	local inner = make(previous)
@@ -426,6 +430,7 @@ function priority.chain(module, field, make, generic, settled)
 	chain = { module = module, field = field, make = make, mode = "inner", generic = generic == true,
 		label = field, slot = slot, inner = inner, previous = previous, settled = settled }
 	fields[field] = slot
+	wrapped_from[slot], wrapped_from[inner] = previous, previous
 	current.chains[#current.chains + 1] = chain
 	all_chains[#all_chains + 1] = chain
 	return slot
@@ -689,6 +694,51 @@ local function filter_plugins()
 	end
 end
 
+-- Replacing a wrapped recipe -------------------------------------------------------------------------
+
+-- Whether `fn` is a recipe react.lua registered.
+---@param fn any
+---@return boolean
+local function is_registered(fn)
+	if type(fn) ~= "function" or type(get_recipe_id) ~= "function" then return false end
+	local ok, id = pcall(get_recipe_id, fn)
+	return ok and id ~= nil
+end
+
+--- The registered recipe behind `fn`: `fn` itself, or, where `fn` is a wrap this mod put in a module
+-- field (priority.chain, builtin_wraps), the recipe it wraps. nil when there is none.
+-- Another mod that replaces the recipe it reads from that field (ReplaceRecipe(builtin.Window, ...))
+-- passes the wrap, which react.lua has no id for: GloballyReplaceRecipeBeforeInitInternal then
+-- writes under a nil key and the game fails at startup ("table index is nil", Don't Auto Pin).
+---@param fn any
+---@return function?
+function priority.registered(fn)
+	for _i = 1, 32 do
+		if is_registered(fn) then return fn end
+		local previous = wrapped_from[fn]
+		if previous == nil then break end
+		fn = previous
+	end
+	if type(fn) ~= "function" then return nil end
+	local ok, base = pcall(function()
+		return require("ui_overhaul_1::/ui_overhaul/gui/builtin_wraps.lua").base(fn)
+	end)
+	if ok and is_registered(base) then return base end
+	return nil
+end
+
+--- `replace` (or another react.lua function taking a recipe first) with its recipe argument turned
+-- into the registered recipe behind it (`registered`).
+---@param replace fun(recipe: function, replacement?: function, ...: any): any
+---@return fun(recipe: function, replacement?: function, ...: any): any
+local function through_registered(replace)
+	return function(recipe, replacement, ...)
+		local ok, found = pcall(priority.registered, recipe)
+		if ok and found ~= nil and found ~= recipe then recipe = found end
+		return replace(recipe, replacement, ...)
+	end
+end
+
 -- Steps ---------------------------------------------------------------------------------------------
 
 --- Before every other mod's config: learns the mods and starts recording their replacements.
@@ -699,7 +749,18 @@ function priority.early(replacement_api, enabled)
 	if not ok then report("mods", err) end
 	base_replace = replacement_api.ReplaceRecipe
 	local api_fields = replacement_api --[[@as table<string, function>]]
-	api_fields.ReplaceRecipe = function(recipe, replacement)
+	-- also for mods that call react.lua's replace themselves
+	local react_fields = react --[[@as table<string, function?>]]
+	local internal = react_fields.GloballyReplaceRecipeBeforeInitInternal
+	if type(internal) == "function" then
+		react_fields.GloballyReplaceRecipeBeforeInitInternal = through_registered(internal)
+	end
+	-- and for their replacement's call of the original, by the function they read from the field
+	local call_original = react_fields.CallOriginalRecipe
+	if type(call_original) == "function" then
+		react_fields.CallOriginalRecipe = through_registered(call_original)
+	end
+	api_fields.ReplaceRecipe = through_registered(function(recipe, replacement)
 		pcall(function()
 			local id = react.GetRecipeId(recipe)
 			if id == nil then return end
@@ -707,7 +768,7 @@ function priority.early(replacement_api, enabled)
 			table.insert(replaced[id], { mod = calling_mod(), recipe = recipe, fn = replacement })
 		end)
 		return base_replace(recipe, replacement)
-	end
+	end)
 	-- the overlapping mods that may be held back; `late` decides
 	for _i, overlap in ipairs(priority.OVERLAPS) do
 		if priority.comes_first(overlap.mod) == false and enabled(overlap.feature) then
