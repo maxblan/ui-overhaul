@@ -422,10 +422,26 @@ function window_tweaks.install_sell(_replacement_api)
 	entity_window_util.ActionButtonBar = sell_wrapper
 end
 
+--- The replacement `replacement` of the bar, with the confirming Sell button in its params: it
+-- returns exactly what the replacement returns, so a wrapper recipe around the bar still gets its
+-- child, and every mod in the replacement's chain keeps its part (GitHub issue #9).
+---@param replacement function another mod's entry in _react.recipeReplace for the bar
+---@return function
+function window_tweaks.chain_sell(replacement)
+	---@param params game.gui.entity_window.entity_window_util.ActionButtonBarParams
+	---@param ... any the rest, passed on unchanged
+	---@return react.TreeNodeId
+	return function(params, ...)
+		return replacement(window_tweaks.bar_params(params), ...)
+	end
+end
+
 --- After every other mod's config (installer.late): where a mod replaced the bar below the wrap
--- (ReplaceRecipe), the wrap would show the original instead of their bar, since it has to make the
--- original's node. Then Sell confirmation steps aside: the field gets the bar below back, and the log
--- names the mod. Returns what was decided, for the log and the specs.
+-- (ReplaceRecipe, as Mass Vehicle Replace and Manage Line from Vehicle do), the wrap would show the
+-- original instead of their bar, since it has to make the original's node. Then the field gets the
+-- bar below back, and the confirmation goes into their replacement instead: the registry entry
+-- calls it with the changed params (chain_sell). The log names the mod. Returns what was decided,
+-- for the log and the specs.
 ---@return string
 function window_tweaks.settle_sell()
 	if not (sell_below and sell_wrapper) then return "not installed" end
@@ -436,8 +452,13 @@ function window_tweaks.settle_sell()
 	local owner = priority_module and priority_module.owner(replacement) or "another mod"
 	if entity_window_util.ActionButtonBar == sell_wrapper then
 		entity_window_util.ActionButtonBar = sell_below
-		debugPrint("[ui_overhaul] Sell confirmation left out: ", tostring(owner), " replaces the action bar")
-		return "left out"
+		if type(replacement) ~= "function" then
+			debugPrint("[ui_overhaul] Sell confirmation left out: ", tostring(owner), " replaces the action bar")
+			return "left out"
+		end
+		_react.recipeReplace[id] = window_tweaks.chain_sell(replacement)
+		debugPrint("[ui_overhaul] Sell confirmation: chained on the action bar ", tostring(owner), " replaces")
+		return "chained"
 	end
 	debugPrint("[ui_overhaul] Sell confirmation: ", tostring(owner), " replaces the action bar, but another mod",
 		" wrapped it above this mod's wrap; their bar does not show")
