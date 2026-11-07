@@ -469,4 +469,48 @@ describe("priority", function()
 			assert.are.equal(get_plugins, fake_react.getPlugins)
 		end)
 	end)
+
+	describe("another mod replacing a recipe from a field this mod wrapped", function()
+		it("replaces the recipe behind the wrap, not a nil id", function()
+			world({ "ui_overhaul_1", "other_mod" })
+			local priority = load_priority()
+			local window = recipe("Window")
+			local module = { Window = window }
+			local api_, replaced = game_api()
+			priority.early(api_, function() return true end)
+			priority.begin("feature", true)
+			priority.chain(module, "Window", function(previous) return function(p) return previous(p) end end)
+			priority.finish(true)
+			local theirs = recipe("Theirs")
+			mod_code("other_mod", "return function(api, m, r) api.ReplaceRecipe(m.Window, r) end")(api_, module, theirs)
+			assert.are.equal(theirs, replaced[window])
+			assert.are.equal(window, priority.registered(module.Window))
+			priority.late()
+			assert.are.equal(window, priority.registered(module.Window))
+		end)
+
+		it("does the same for react.lua's replace, called directly", function()
+			world({ "ui_overhaul_1", "other_mod" })
+			local priority = load_priority()
+			local window = recipe("Window")
+			local module = { Window = window }
+			local calls = {} ---@type function[]
+			---@diagnostic disable-next-line: inject-field
+			fake_react.GloballyReplaceRecipeBeforeInitInternal = function(original, _replacement)
+				calls[#calls + 1] = original
+			end
+			priority.early(game_api(), function() return true end)
+			priority.begin("feature", true)
+			priority.chain(module, "Window", function(previous) return function(p) return previous(p) end end)
+			priority.finish(true)
+			fake_react.GloballyReplaceRecipeBeforeInitInternal(module.Window, recipe("Theirs"))
+			fake_react.GloballyReplaceRecipeBeforeInitInternal = nil
+			assert.are.same({ window }, calls)
+		end)
+
+		it("leaves a function that is no recipe as it is", function()
+			local priority = load_priority()
+			assert.is_nil(priority.registered(function() end))
+		end)
+	end)
 end)
