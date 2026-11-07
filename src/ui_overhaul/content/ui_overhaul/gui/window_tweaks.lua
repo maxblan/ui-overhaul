@@ -268,11 +268,13 @@ local function use_town_states(town, factors)
 	return { factors = factor_states, level_widget = level_widget, development = development }
 end
 
---- The text under the base level widget, or nil.
+--- The text under the base level widget, or nil. Its id names the town: a pinned town window and
+-- a second one are both open, and one id in two windows is "stolen component id" (mod.io report).
+---@param town Engine.Entity
 ---@param factors uo.window_tweaks.GrowthFactor[] growth_factors()
 ---@param states uo.town.States
 ---@return react.TreeNodeId|nil
-local function bottleneck_text(factors, states)
+local function bottleneck_text(town, factors, states)
 	if not states.development:old() then return nil end
 	local worst, worst_rank = nil, math.huge
 	for i, factor in ipairs(factors) do
@@ -292,7 +294,7 @@ local function bottleneck_text(factors, states)
 			percentage = api.util.toStringPercent(fraction), nextTownLevelName = town_util.level2name(level + 1) })
 	end
 	if #parts == 0 then return nil end
-	return builtin.TextView{ meta = { class = "font-scale-body", id = "uio.town.bottleneck" },
+	return builtin.TextView{ meta = { class = "font-scale-body", id = "uio.town.bottleneck." .. tostring(town) },
 		text = table.concat(parts, "  \xC2\xB7  ") }
 end
 
@@ -317,7 +319,7 @@ local TownBottleneck = react.RegisterRecipe("UioTownBottleneck", function(params
 	if not ok then town_level_failed(states) end
 	local node ---@type react.TreeNodeId?
 	if not window_tweaks.town_level_failed then
-		local text_ok, text = pcall(bottleneck_text, factors, states)
+		local text_ok, text = pcall(bottleneck_text, params.town, factors, states)
 		if text_ok then node = text else town_level_failed(text) end
 	end
 	return builtin.BoxLayout{ orientation = builtin.type.Orientation.Vertical,

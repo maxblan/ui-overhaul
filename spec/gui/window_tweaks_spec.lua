@@ -95,8 +95,8 @@ local stand_ins = {
 	["::/gui/main/builtin.lua"] = {
 		BoxLayout = function(t) return { box = t } end,
 		---@param t builtin.TextViewParam
-		---@return { text: string? }
-		TextView = function(t) return { text = t.text } end,
+		---@return { text: string?, id: string? }
+		TextView = function(t) return { text = t.text, id = t.meta and t.meta.id } end,
 		type = { Orientation = { Vertical = "vertical" } },
 	},
 	["::/gui/main/content_card.tl"] = content_card,
@@ -382,6 +382,13 @@ describe("window_tweaks town level", function()
 		assert.are.same({ "useRef", "traffic", "noise", "::/game_mechanics/towns/town_util_parallel.script@"
 			.. "town_util_parallel.getRatingDeliveries", "::/game_mechanics/towns/town_util_parallel.script@"
 			.. "town_util_parallel.getTownLevelWidgetState", "useStepState" }, hooks)
+	end)
+
+	it("gives each town's text its own id, so two open town windows do not share one", function()
+		local first = mount("UioTownBottleneck").render({ town = 7 })
+		local second = mount("UioTownBottleneck").render({ town = 8 })
+		assert.are.equal("uio.town.bottleneck.7", first.box.children[1].id)
+		assert.are.equal("uio.town.bottleneck.8", second.box.children[1].id)
 	end)
 
 	it("leaves the progress out while the level state is still nil", function()

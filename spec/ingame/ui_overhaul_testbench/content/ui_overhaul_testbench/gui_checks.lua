@@ -982,7 +982,25 @@ local checks = {
 		shot = "town_window",
 		check = function(ctx)
 			if not ctx.town then return true, "skipped: no town" end
-			return visible("uio.town.bottleneck"), "bottleneck line visible=" .. tostring(visible("uio.town.bottleneck"))
+			local id = "uio.town.bottleneck." .. tostring(ctx.town)
+			return visible(id), "bottleneck line visible=" .. tostring(visible(id))
+		end,
+	},
+	{
+		-- a second town window next to the first: each bottleneck line has its own id
+		name = "town_window_second",
+		act = function(ctx)
+			local towns = api.engine.getEntitiesWithComponent(api.type.ComponentType.TOWN)
+			ctx.town2 = towns[2]
+			if ctx.town2 then api.gui.fireReactEvent("selectEntity", { entity = ctx.town2, stack = true }) end
+		end,
+		wait = 120,
+		shot = "town_window_second",
+		check = function(ctx)
+			if not ctx.town2 then return true, "skipped: fewer than two towns" end
+			local first, second = visible("uio.town.bottleneck." .. tostring(ctx.town)),
+				visible("uio.town.bottleneck." .. tostring(ctx.town2))
+			return second, "first visible=" .. tostring(first) .. ", second visible=" .. tostring(second)
 		end,
 	},
 	{
