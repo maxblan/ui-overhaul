@@ -291,6 +291,7 @@ end
 ---@field cargo_line? Engine.Entity
 ---@field clone_before? integer
 ---@field town? Engine.Entity
+---@field town2? Engine.Entity a second town, for two town windows at once
 ---@field industry? Engine.Entity
 ---@field screen? { x: integer, y: integer } screen size in pixels
 ---@field industry_blocked? boolean
